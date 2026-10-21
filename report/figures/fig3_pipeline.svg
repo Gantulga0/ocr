@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 230" font-family="Helvetica,Arial,sans-serif" font-size="13">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#333"/></marker></defs>
+<rect width="1000" height="230" fill="#fff"/>
+<g stroke="#333" stroke-width="1.5" fill="#f4f6fa">
+<rect x="10" y="70" width="120" height="70" rx="8"/><rect x="170" y="70" width="150" height="70" rx="8"/><rect x="360" y="70" width="150" height="70" rx="8"/>
+<rect x="550" y="40" width="150" height="55" rx="8"/><rect x="550" y="115" width="150" height="55" rx="8"/>
+<rect x="740" y="70" width="110" height="70" rx="8"/><rect x="880" y="55" width="110" height="100" rx="8" fill="#eaf5ea"/>
+</g>
+<g text-anchor="middle" fill="#111">
+<text x="70" y="100">Camera frame</text><text x="70" y="118">1920×1080</text>
+<text x="245" y="95" font-weight="bold">YOLO11n</text><text x="245" y="112">plate detector</text><text x="245" y="128">640 px, FP16</text>
+<text x="435" y="95" font-weight="bold">Layout split</text><text x="435" y="112">w/h &lt; 1.8 → two-line</text><text x="435" y="128">else single-line</text>
+<text x="625" y="62" font-weight="bold">CRNN + CTC</text><text x="625" y="80">line 1: 1234</text>
+<text x="625" y="137" font-weight="bold">CRNN + CTC</text><text x="625" y="155">line 2: УБА</text>
+<text x="795" y="95" font-weight="bold">Grammar</text><text x="795" y="112">^\d{4}[А-ЯӨҮ]{3}$</text><text x="795" y="128">region codes</text>
+<text x="935" y="80" font-weight="bold">Track + vote</text><text x="935" y="98">IoU tracking</text><text x="935" y="114">w = c·(0.5+s)</text><text x="935" y="130">per-position</text><text x="935" y="146">consensus</text>
+</g>
+<g stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#a)">
+<path d="M130,105 L170,105"/><path d="M320,105 L360,105"/><path d="M510,100 L550,70"/><path d="M510,110 L550,140"/><path d="M700,70 L740,100"/><path d="M700,140 L740,110"/><path d="M850,105 L880,105"/>
+</g>
+<text x="500" y="205" text-anchor="middle" fill="#444" font-size="12">Single-line plates go through one CRNN pass (label "1234УБА"); two-line plates are read as a digit line and a letter line and concatenated.</text>
+</svg>

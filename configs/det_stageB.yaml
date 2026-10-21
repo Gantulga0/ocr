@@ -1,0 +1,5 @@
+path: /home/bolly/Desktop/ocr/data/det
+train: [hf_plates/images/train, github_rep/images/train]
+val: github/images/val
+names:
+  0: plate

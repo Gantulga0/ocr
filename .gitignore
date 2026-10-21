@@ -1,0 +1,10 @@
+# data & experiment outputs (large; regenerate with scripts/)
+data/
+runs/
+*.log
+__pycache__/
+*.pyc
+.vscode/
+yolo11n.pt
+models/onnx/
+report/values.json

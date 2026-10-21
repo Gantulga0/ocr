@@ -1,0 +1,15 @@
+# Install PyTorch first (pick the right CUDA/CPU wheel for your laptop):
+#   GPU : pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+#   CPU : pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+ultralytics>=8.3
+opencv-python-headless>=4.10
+gradio>=5.0
+numpy
+pillow
+editdistance
+pandas
+matplotlib
+pyyaml
+tqdm
+roboflow        # only for scripts/download_roboflow.py
+onnx            # only for scripts/export_onnx.py

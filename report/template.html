@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mongolian ALPR Report</title>
+<meta name="description" content="IEEE-style technical report: YOLO11n + CRNN-CTC Mongolian license plate recognition with multi-frame verification">
+<style>
+:root{--ink:#111;--muted:#444;--rule:#999;--bg:#fff;--accent:#1a4a8a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#e8e8e8;--muted:#bbb;--rule:#666;--bg:#161616;--accent:#8ab4f8}}
+:root[data-theme="dark"]{--ink:#e8e8e8;--muted:#bbb;--rule:#666;--bg:#161616;--accent:#8ab4f8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Times New Roman",Times,"Liberation Serif",serif;font-size:10pt;line-height:1.25}
+.page{max-width:8.5in;margin:0 auto;padding:0.6in 0.55in}
+h1.title{font-size:20pt;font-weight:normal;text-align:center;margin:0 0 10pt}
+.authors{text-align:center;font-size:11pt;margin-bottom:4pt}.affil{text-align:center;font-style:italic;font-size:9.5pt;color:var(--muted);margin-bottom:14pt}
+.cols{column-count:2;column-gap:0.25in;column-rule:none}
+.abstract{font-weight:bold;font-size:9pt;text-align:justify}.abstract b{font-style:italic}
+.terms{font-weight:bold;font-size:9pt;margin:6pt 0 10pt}
+h2{font-size:10pt;font-weight:normal;text-align:center;text-transform:uppercase;letter-spacing:.3px;margin:12pt 0 5pt;break-after:avoid}
+h3{font-size:10pt;font-weight:normal;font-style:italic;margin:8pt 0 3pt;break-after:avoid}
+p{margin:0 0 4pt;text-align:justify;text-indent:1.2em}p.noindent,.abstract,.terms{text-indent:0}
+table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;font-size:8pt;margin:4pt 0 8pt;break-inside:avoid}
+caption{caption-side:top;font-size:8pt;text-transform:uppercase;letter-spacing:.3px;padding:2pt 0 4pt;text-align:center}
+th,td{padding:2.5pt 3pt;text-align:center;border-top:1px solid var(--rule);overflow-wrap:anywhere;word-break:break-word;vertical-align:top}th{border-top:2px solid var(--ink);border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:2px solid var(--ink)}td.l,th.l{text-align:left}
+figure{margin:6pt 0 10pt;break-inside:avoid;text-align:center}figure img,figure svg{max-width:100%;height:auto;border:1px solid var(--rule)}
+figcaption{font-size:8pt;margin-top:3pt;text-align:justify}
+.wide{column-span:all}
+ol.refs{font-size:8.5pt;padding-left:1.8em}ol.refs li{margin-bottom:2pt;text-align:justify}
+code,pre{font-family:"Courier New",monospace;font-size:8.5pt}pre{background:rgba(127,127,127,.12);padding:6pt;overflow-x:auto;white-space:pre-wrap}
+.eq{text-align:center;margin:4pt 0;text-indent:0}
+.mn{font-size:9pt;border-left:3px solid var(--accent);padding-left:8pt;margin:6pt 0 10pt}
+@media (max-width:700px){.cols{column-count:1}.page{padding:16px}}
+@media print{.page{max-width:none;padding:0}body{font-size:9.5pt}table{font-size:7.5pt}code{font-size:7.5pt}}
+</style>
+</head>
+<body><div class="page">
+<h1 class="title">Real-Time Mongolian License Plate Recognition for Parking Systems Using YOLO11n Detection, CRNN-CTC Recognition and Multi-Frame Consensus Voting</h1>
+<div class="authors">%%AUTHOR%%</div>
+<div class="affil">%%AFFIL%% &mdash; Technical report, %%DATE%%</div>
+
+<div class="cols">
+<p class="abstract"><b>Abstract&mdash;</b>Automatic license plate recognition (ALPR) for Mongolia is under-served by public datasets and off-the-shelf OCR models, which lack the Mongolian Cyrillic letters Ө and Ү and the two-line square plate layout common on Mongolian vehicles. This report describes a two-stage ALPR system intended as the perception module of a parking-management system. Stage one localises plates with a YOLO11n detector pre-trained on 8,823 generic plate images and fine-tuned on Mongolian imagery; stage two reads the plate with a CRNN (ResNet-style CNN + bidirectional LSTM) trained with the Connectionist Temporal Classification (CTC) loss, in the manner of the PaddleOCR CRNN recogniser, over a 45-symbol alphabet (10 digits + 35 Mongolian Cyrillic letters). Text-labelled Mongolian plate data is scarce: the recogniser is first trained on %%N_SYNTH%% synthetic plate line images rendered with Roboto/DIN-like typefaces, the Soyombo emblem and the MNG oval under heavy photometric and geometric augmentation, and then adapted on real crops: %%N_MLUB%% traffic-camera plate crops with ground-truth strings from the MLUB "Mongolian car plate prediction" competition data (recovered from a public GitHub repository) and %%N_REAL_TRAIN%% text lines derived from the character-level boxes of the gumbernator/Mongolian-ALPR images. A syntactic plate grammar (4 digits + 3 letters, region-code table) and a confidence-weighted per-character voting scheme across tracked video frames provide the multi-frame verification required by a parking gate. On %%N_MLUB_VAL_PLATES%% held-out real plates (split by plate identity) the recogniser reads %%MLUB_ACC%% of plates fully correctly (CER %%MLUB_CER%%), rising to %%MLUB_K9%% with %%K_FRAMES%%-frame consensus voting; on the %%N_VAL_IMGS%% full-scene parking-lot test images the detector reaches mAP<sub>50</sub> = %%DET_MAP50_MN%% and the end-to-end pipeline reads %%ACC_SINGLE%% of plates from a single frame and %%ACC_MULTI%% with %%K_FRAMES%%-frame voting, at %%LAT_MEAN%% ms per 1080p frame (p95 %%LAT_P95%% ms) on an RTX 5080 GPU. The report documents the datasets surveyed (including the Roboflow Universe "mongolian plate" set and the gumbernator/Mongolian-ALPR repository), the training protocol, the evaluation, and the remaining gaps toward a production parking deployment.</p>
+<p class="terms"><i>Index Terms</i>&mdash;Automatic license plate recognition, Mongolian Cyrillic, YOLO11, CRNN, CTC, multi-frame voting, parking system, synthetic data.</p>
+
+<div class="mn"><b>Хураангуй.</b> Энэхүү тайланд зогсоолын системд зориулсан Монгол улсын дугаар таних хоёр шатлалт системийг танилцуулав. YOLO11n загвараар дугаарын байрлалыг илрүүлж, CRNN+CTC (PaddleOCR-маягийн) уншигчаар 4 орон + 3 кирилл үсгийг уншина. %%N_SYNTH%% синтетик мөр зураг үүсгэж урьдчилан сургаад, MLUB тэмцээний %%N_MLUB%% бодит дугаарын зураг (үнэн текстээр) болон GitHub-ийн %%N_REAL_TRAIN%% бодит мөрөөр нарийвчлан тохируулав. Дугаарын дүрэм (4 орон + 3 үсэг, аймгийн код) болон олон кадрын итгэлээр жинлэсэн саналын аргаар баталгаажуулалт хийнэ. Шалгалтын %%N_MLUB_VAL_PLATES%% бодит дугаар дээр бүтэн зөв уншилт %%MLUB_ACC%% (CER %%MLUB_CER%%), %%K_FRAMES%% кадрын санал нэгдлээр %%MLUB_K9%%; бүтэн дүрстэй %%N_VAL_IMGS%% зураг дээр илрүүлэлтийн mAP<sub>50</sub> = %%DET_MAP50_MN%%, төгсгөл хүртэлх нэг кадрын уншилт %%ACC_SINGLE%%, олон кадраар %%ACC_MULTI%%; нэг кадрын боловсруулалт %%LAT_MEAN%% мс (RTX 5080).</div>
+
+<h2>I. Introduction</h2>
+<p>Parking systems rely on ALPR to open gates, bill drivers and match entry/exit events without tickets. Commercial engines are tuned for Latin alphabets or for Chinese plates; Mongolian plates use the Mongolian Cyrillic alphabet, which adds the letters Ө (U+04E8) and Ү (U+04AE) to the Russian alphabet, and they appear in two physical layouts (single-line 520&times;110 mm and two-line square plates). General OCR engines that do support Cyrillic are not aware of the plate grammar, so they produce Latin look-alike confusions (e.g. Latin B for Cyrillic В) and cannot exploit the fixed 4-digit/3-letter structure.</p>
+<p>This work builds a complete, reproducible baseline for Mongolian ALPR under the constraints set for the parking product: (i) full-plate accuracy of at least 95%, (ii) per-frame processing under 100 ms, (iii) detector mAP<sub>50</sub> of at least 0.95, (iv) a multi-frame verification mechanism so that a gate decision is taken from a sequence of frames rather than a single one, and (v) a small upload interface for early testing before integration. The contributions are:</p>
+<p class="noindent">1) a survey and consolidation of the publicly available Mongolian plate data (Section III), including the derivation of text transcriptions from character-level boxes; 2) a synthetic plate renderer that reproduces the Mongolian plate design, both layouts and the post-2018 Roboto typeface; 3) a two-stage YOLO11n + CRNN-CTC pipeline with layout-aware line splitting; 4) a confidence-weighted, grammar-aware multi-frame consensus scheme; and 5) a quantitative evaluation against the stated targets with an honest account of what the small real-image corpus can and cannot establish.</p>
+
+<h2>II. Related Work</h2>
+<p>Two-stage ALPR (detect, then read) remains the dominant design. Laroca <i>et al.</i> [1] used YOLO detectors for both vehicle/plate localisation and character recognition and were among the first to show that majority voting over the frames of a tracked vehicle substantially improves video ALPR; later works [2], [3] confirm gains of 10&ndash;15 points of exact-match accuracy from temporal voting, with the caveat that plates misread in almost every frame cannot be rescued. Sequence-based recognisers replaced per-character segmentation: the CRNN of Shi <i>et al.</i> [4] combines a convolutional feature extractor, a bidirectional recurrent layer and the CTC loss [5], and is the recognition architecture used in the PaddleOCR toolkit's CRNN/PP-OCR models [6]. Synthetic text data in the style of Jaderberg <i>et al.</i> [7] and rendering-based plate synthesis [8] are standard remedies when annotated plates are scarce. For the Mongolian case, the only public code we found is the gumbernator/Mongolian-ALPR repository [9] (SSD/Faster R-CNN detector from the TensorFlow Object Detection API, reported 66&ndash;72 mAP, and a per-character Keras CNN classifier whose weights are no longer available); the Roboflow Universe "mongolian plate" dataset [10] offers plate bounding boxes but no transcriptions; two further GitHub projects [11], [12] use YOLOv8 for detection or Tesseract for reading but do not release a labelled dataset. We are not aware of a peer-reviewed Mongolian ALPR paper with a public benchmark, which is why this report also fixes an evaluation protocol.</p>
+
+<h2>III. Mongolian Plates and Datasets</h2>
+<h3>A. Plate characteristics</h3>
+<p>The standard private series consists of four digits (leading zeros allowed) followed by three uppercase Cyrillic letters, e.g. 1234 УБА [13]. The first two letters encode the registration region (aimag or city district): УБ, УН, УА, УЕ, УК for Ulaanbaatar, АР Arkhangai, ХӨ Khövsgöl, СЭ Selenge, etc. (a 29-entry table is embedded in <code>mn_alpr/plate_rules.py</code>); the third letter is a serial letter. Since 2001 the plate carries the red Soyombo emblem on the left and an oval with "MNG" between the digit and letter groups; the typeface was DIN 1451 and since about 2018 Roboto on many new plates [13]. Diplomatic plates are red and start with ДК; military (ЦАБ) and border-troop (ХЦА) series exist [14]. In our real imagery (Fig. 1) we observe three visual variants: (a) single-line plates with the Soyombo and MNG oval, (b) older single-line plates with a hyphen between the digit pairs (e.g. 91-44 УБА), and (c) two-line square plates with the digits on the upper line and the letters on the lower line. The aspect ratio separates the layouts cleanly: two-line plates have width/height in [0.98, 1.53] and single-line plates in [1.89, 3.81] in our data, so a threshold of 1.8 is used.</p>
+<figure><img src="figures/fig1_samples.jpg" alt="Sample Mongolian plate images"><figcaption>Fig. 1. Top: real images from the gumbernator/Mongolian-ALPR set (parking lots, Ulaanbaatar, winter daylight, phone camera, 1920&times;1080). Middle: their plate crops showing the single-line, hyphenated and two-line variants. Bottom: MLUB traffic-camera crops (470&times;110, two-line plates stretched).</figcaption></figure>
+
+<h3>B. Data sources surveyed</h3>
+<p>Table I lists every source examined. The Roboflow Universe dataset "mongolian plate" (workspace computer-vision-m1xzb) contains 984 Mongolian vehicle photographs with one class, "license plate", and bounding-box annotations only (no text), is licensed CC BY 4.0, has two identical versions generated on 13 April 2025 with a 100% train split (no validation/test split) and images stretched to 640&times;640; export requires a Roboflow account API key, which was not available in this environment, so a download script (<code>scripts/download_roboflow.py</code>) is provided and the set is reserved as additional detector data. The gumbernator/Mongolian-ALPR repository ships 68 full-HD images with Pascal-VOC boxes for the plate <i>and for every character</i> (labelled with a Latin transliteration, e.g. <code>uu</code>=Ү, <code>q</code>=Ө, <code>ye</code>=Е, <code>e</code>=Э), from which we reconstruct 72 plate transcriptions by sorting digit boxes and letter boxes by x-coordinate (two plates with missing characters were discarded). The Kaggle dataset "mlub mongolian car plate prediction v1" (34 kB) contains only a CSV of plate strings; however, the full MLUB competition data (3,697 training and 3,697 test plate crops, 470&times;110 px, each with its ground-truth string in <code>training.csv</code>/<code>test.csv</code>) is present inside the Tsundgerhen/mongolian_licence_plate repository [11], together with three phone-camera street videos. These are real traffic/parking camera crops (Fig. 1, bottom), heavily compressed, including dirty and night plates, and roughly a third of them are two-line plates that were stretched to the single-line canvas; two strings that violate the plate grammar were discarded, leaving %%N_MLUB%% crops with %%N_MLUB_UNIQUE%% distinct plate strings (the competition's test images are additional frames of the training vehicles, so the original split cannot be used for evaluation). No Mongolian plate data was found on Hugging Face. For detector pre-training we use the Roboflow "Vehicle Registration Plates" export redistributed on Hugging Face as keremberke/license-plate-object-detection (8,823 images; 6,176/1,765/882 train/valid/test, COCO boxes, single class).</p>
+<table><caption>Table I. Data sources examined</caption>
+<tr><th class="l">Source</th><th>Images</th><th>Labels</th><th>Mongolian</th><th>Used for</th></tr>
+<tr><td class="l">gumbernator/Mongolian-ALPR (GitHub) [9]</td><td>68 (74 plates)</td><td>plate + char boxes &rarr; text</td><td>yes</td><td>det fine-tune, rec adaptation, test</td></tr>
+<tr><td class="l">Roboflow Universe mongolian-plate [10]</td><td>984</td><td>plate boxes</td><td>yes</td><td>script provided (API key needed)</td></tr>
+<tr><td class="l">keremberke/license-plate-object-detection (HF)</td><td>8,823</td><td>plate boxes</td><td>no</td><td>det pre-training</td></tr>
+<tr><td class="l">Kaggle mlub-mongolian-car-plate-prediction-v1</td><td>0 (CSV)</td><td>plate strings</td><td>yes</td><td>&mdash;</td></tr>
+<tr><td class="l">MLUB car-plate-prediction (via [11])</td><td>%%N_MLUB%% crops</td><td>plate text</td><td>yes</td><td>rec adaptation, main test set</td></tr>
+<tr><td class="l">Tsundgerhen/mongolian_licence_plate videos [11]</td><td>3 videos</td><td>none</td><td>yes</td><td>qualitative video test</td></tr>
+<tr><td class="l">Synthetic renderer (this work)</td><td>%%N_SYNTH%% lines</td><td>text</td><td>yes</td><td>rec pre-training</td></tr>
+</table>
+<h3>C. Splits</h3>
+<p>The 68 real images were split 70/30 <i>by plate identity</i>: images that share a plate string (the same car photographed several times) are forced into the same split, giving %%N_TRAIN_IMGS%% training images (%%N_TRAIN_PLATES%% plates, %%N_REAL_TRAIN%% text lines) and %%N_VAL_IMGS%% test images (%%N_VAL_PLATES%% plates, %%N_REAL_VAL%% text lines) with zero plate overlap. Two-line plates contribute two text lines (digits, letters) each; single-line plates contribute one. The MLUB crops were likewise split 80/20 by plate string: %%N_MLUB_TRAIN_PLATES%% training and %%N_MLUB_VAL_PLATES%% test crops with no shared plate. Because the MLUB crops carry no layout label, the layout was assigned automatically: a crop is two-line if reading its upper and lower halves separately with the current recogniser reproduces the ground-truth digits and letters (a one-line reading may also succeed on a stretched two-line crop, so the split test takes precedence), single-line if only the one-line reading succeeds, otherwise the reading closer in edit distance wins and the %%N_MLUB_AMBIG%% remaining ties were resolved by a horizontal ink-profile test. This yielded %%N_MLUB_TWO%% two-line crops (%%N_MLUB_TWO_PCT%% of the set); a visual check of 36 random crops labelled single-line found one two-line plate among them. The GitHub set, whose camera and framing differ (whole-vehicle phone photographs rather than traffic-camera crops), serves as the end-to-end test set for the detector + recogniser chain.</p>
+
+<h3>D. Synthetic plate rendering</h3>
+<p>Because the recogniser must learn 45 symbol classes from 74 real plates, we render synthetic plates (Fig. 2). For each sample a random 4-digit number and a 3-letter suffix are drawn; the region code is sampled from the 29 known codes with Ulaanbaatar codes weighted as observed (УБ 40%, УН 25%), and 10% of suffixes are fully random so that all 35 letters are covered. Single-line plates (520:110) are drawn in three styles (Soyombo + MNG oval, hyphenated legacy, plain), and two-line plates in a 300&ndash;360 &times; 220&ndash;280 px square layout; the two-line plate yields a digit-line crop and a letter-line crop. Nine Cyrillic-capable typefaces are used (Roboto, Roboto Flex, Roboto Mono, PT Sans Bold, Fira Sans Condensed, Oswald, DejaVu Sans Bold/Condensed, Noto Sans Condensed), with random weight/width for the variable fonts. Augmentation mimics a parking camera: random crop/margin jitter (detector box error), perspective warp, rotation &plusmn;8&deg;, down-sampling to 14&ndash;64 px height, brightness/contrast/gamma/colour-cast changes, shadow bands, dirt spots, Gaussian and motion blur, sensor noise, JPEG re-compression (quality 30&ndash;90) and occasional greyscale conversion.</p>
+<figure><img src="figures/fig2_synth.jpg" alt="Synthetic plates"><figcaption>Fig. 2. Synthetic training lines after augmentation: single-line plates (label = 7 symbols), digit lines and letter lines from two-line plates.</figcaption></figure>
+
+<h2>IV. Proposed Method</h2>
+<figure class="wide"><img src="figures/fig3_pipeline.svg" alt="Pipeline"><figcaption>Fig. 3. System overview. Frames are processed by the YOLO11n detector; each plate crop is classified as single- or two-line by aspect ratio, split into text lines, read by the CRNN-CTC recogniser, normalised by the plate grammar, and accumulated per tracked plate by confidence-weighted per-character voting.</figcaption></figure>
+<h3>A. Plate detection (YOLO11n)</h3>
+<p>YOLO11n (2.6 M parameters) is initialised from COCO weights and trained in two stages at 640 px: Stage A on the generic 8,823-image plate set for %%EPOCHS_A%% epochs, Stage B on the union of the generic training set and the Mongolian training images oversampled 15&times; for %%EPOCHS_B%% epochs, with cosine learning-rate schedule, mosaic (disabled for the last 10 epochs), mixup 0.1, &plusmn;5&deg; rotation, shear 3&deg; and mild perspective; horizontal flipping is disabled because it would mirror the characters. Model selection uses mAP<sub>50-95</sub> on the Mongolian validation images.</p>
+<h3>B. Layout-aware recognition (CRNN + CTC)</h3>
+<p>Plate crops with width/height &lt; 1.8 are treated as two-line: the upper 55% and the lower 55% of the crop are read separately and concatenated (digits then letters). Each line is resized to a height of 48 px preserving aspect ratio, right-padded to 192 px and normalised to [&minus;1, 1]. The recogniser follows the CRNN design [4]: a 7-block residual CNN (channels 32&rarr;64&rarr;128&rarr;256&rarr;384, height reduced 48&rarr;3, width reduced 192&rarr;48) produces a sequence of T = 48 feature vectors; two bidirectional LSTM layers (192 hidden units per direction) model the sequence; a linear layer emits per-step logits over 46 classes (45 symbols + CTC blank). The model has %%REC_PARAMS%% M parameters. Training minimises the CTC loss [5]:</p>
+<p class="eq">L = &minus;&Sigma;<sub>(x,y)</sub> log &Sigma;<sub>&pi;&isin;B<sup>&minus;1</sup>(y)</sub> &Pi;<sub>t</sub> p(&pi;<sub>t</sub> | x)</p>
+<p class="noindent">where B collapses repeated symbols and removes blanks. Decoding is greedy; the line confidence is the mean posterior of the emitted (non-blank, non-repeated) steps. Training uses AdamW (weight decay 10<sup>&minus;4</sup>), one-cycle schedule with peak learning rate 10<sup>&minus;3</sup>, batch 256, bfloat16 autocast, gradient clipping at 5. Stage 1 trains on synthetic lines only for %%REC_EPOCHS_S%% epochs; Stage 2 continues on synthetic + the 74 GitHub lines (repeated 40&times;) for %%REC_EPOCHS_F%% epochs; Stage 3 continues on synthetic + MLUB training crops + GitHub lines for %%REC_EPOCHS_M%% epochs (round 1 + round 2) at a peak learning rate of 5&middot;10<sup>&minus;4</sup>, with light augmentation (crop jitter, &plusmn;6&deg; rotation, brightness, noise, blur) on the real lines. Model selection uses full-plate accuracy minus character error rate on the validation crops. Two rounds of Stage 3 are run: the first-round model re-labels the MLUB layouts, after which the recogniser is retrained.</p>
+<h3>C. Grammar normalisation</h3>
+<p>Recognised strings are upper-cased, Latin look-alikes are mapped to Cyrillic (A&rarr;А, B&rarr;В, E&rarr;Е, K&rarr;К, M&rarr;М, H&rarr;Н, O&rarr;О, P&rarr;Р, C&rarr;С, T&rarr;Т, Y&rarr;У, X&rarr;Х), separators are removed and the result is matched against <code>^\d{4}[А-ЯӨҮ]{3}$</code>. A plausibility prior s(y) &isin; [0, 1] gives 0.6 for a grammatical string, +0.3 if the two-letter region code is known and +0.1 if the serial letter belongs to the set observed on plates.</p>
+<h3>D. Multi-frame consensus voting</h3>
+<p>For video, detections are associated to tracks by IoU (threshold 0.3, tracks expire after 15 missed frames). For every frame t a track receives the hypothesis y<sub>t</sub> with recogniser confidence c<sub>t</sub>; the vote weight is w<sub>t</sub> = c<sub>t</sub> (0.5 + s(y<sub>t</sub>)). Votes are accumulated per hypothesis length L and per character position i: V<sub>L</sub>[i][ch] += w<sub>t</sub>. The consensus length is the L with the largest total mass (length 7 is favoured by a factor 1.3), the consensus string takes the arg-max character at each position, and the <i>margin</i> (mean vote share of the winning character) is reported as a reliability score. A parking gate would open once a track has n &ge; 3 frames, a grammatical consensus string and margin above a threshold; the per-position voting corrects isolated single-character errors, which [1]&ndash;[3] identify as the dominant failure mode of single-frame ALPR.</p>
+
+<h2>V. Experimental Setup</h2>
+<p>All experiments ran on one NVIDIA GeForce RTX 5080 (16 GB), PyTorch 2.11 + CUDA 12.8, Ultralytics YOLO11, Python 3.12. Detection is evaluated with COCO-style mAP<sub>50</sub> and mAP<sub>50-95</sub> on the Mongolian test images and on the generic validation set. Recognition is evaluated on the real test lines with line accuracy, character error rate (CER = edit distance / ground-truth length) and <i>full-plate accuracy</i> (all seven symbols correct after joining the two lines of two-line plates). End-to-end accuracy counts a plate as correct only if it is detected (IoU &ge; 0.5) and read exactly. Multi-frame behaviour is measured in two ways: (i) a controlled simulation in which each test image is re-rendered K times with random affine jitter (&plusmn;3&deg;, &plusmn;3% translation, 0.9&ndash;1.1 scale), brightness/contrast changes, blur and noise, and the K hypotheses are voted; (ii) qualitatively on real street videos from [11]. Latency is the wall-clock time of <code>process_frame</code> (detector inference with FP16 at 640 px, crop, layout split, recogniser, grammar) on 1920&times;1080 frames, after warm-up, averaged over 90 runs with CUDA synchronisation.</p>
+
+<h2>VI. Results</h2>
+<h3>A. Plate detection</h3>
+<table><caption>Table II. Detector results (YOLO11n, 640 px)</caption>
+<tr><th class="l">Evaluation set</th><th>Precision</th><th>Recall</th><th>mAP<sub>50</sub></th><th>mAP<sub>50-95</sub></th></tr>
+<tr><td class="l">Mongolian test (%%N_VAL_IMGS%% images, %%N_VAL_BOXES%% plates)</td><td>%%DET_P_MN%%</td><td>%%DET_R_MN%%</td><td><b>%%DET_MAP50_MN%%</b></td><td>%%DET_MAP_MN%%</td></tr>
+<tr><td class="l">Generic validation (1,765 images)</td><td>%%DET_P_GEN%%</td><td>%%DET_R_GEN%%</td><td>%%DET_MAP50_GEN%%</td><td>%%DET_MAP_GEN%%</td></tr>
+</table>
+<figure><img src="figures/fig4_det_curves.png" alt="Detector training curves"><figcaption>Fig. 4. Detector training: mAP<sub>50</sub> and mAP<sub>50-95</sub> per epoch for Stage A (generic) and Stage B (Mongolian fine-tuning, validated on the Mongolian test images).</figcaption></figure>
+<p>%%DET_DISCUSSION%%</p>
+<h3>B. Recognition and end-to-end accuracy</h3>
+<table><caption>Table III. Recognition accuracy on real Mongolian plates</caption>
+<tr><th class="l">Model / setting</th><th>Test set</th><th>N plates</th><th>CER</th><th>Full-plate acc.</th></tr>
+<tr><td class="l">CRNN, synthetic only (zero real plates)</td><td>GitHub crops</td><td>%%N_VAL_PLATES%%</td><td>%%S_CER%%</td><td>%%S_PLATE%%</td></tr>
+<tr><td class="l">CRNN, synthetic + GitHub lines (74 lines)</td><td>GitHub crops</td><td>%%N_VAL_PLATES%%</td><td>%%F_CER%%</td><td>%%F_PLATE%%</td></tr>
+<tr><td class="l">CRNN, synthetic + MLUB + GitHub (final)</td><td>MLUB crops</td><td>%%N_MLUB_VAL_PLATES%%</td><td>%%MLUB_CER%%</td><td><b>%%MLUB_ACC%%</b></td></tr>
+<tr><td class="l">&nbsp;&nbsp;&nbsp;single-line plates only</td><td>MLUB crops</td><td>%%N_MLUB_VAL_1L%%</td><td>&mdash;</td><td>%%MLUB_ACC_1L%%</td></tr>
+<tr><td class="l">&nbsp;&nbsp;&nbsp;two-line plates only</td><td>MLUB crops</td><td>%%N_MLUB_VAL_2L%%</td><td>&mdash;</td><td>%%MLUB_ACC_2L%%</td></tr>
+<tr><td class="l">CRNN, synthetic + MLUB + GitHub (final)</td><td>GitHub crops</td><td>%%N_VAL_PLATES%%</td><td>%%G_CER%%</td><td>%%G_PLATE%%</td></tr>
+<tr><td class="l">End-to-end YOLO11n &rarr; CRNN, single frame</td><td>GitHub scenes</td><td>%%N_VAL_PLATES%%</td><td>%%E2E_CER%%</td><td>%%ACC_SINGLE%%</td></tr>
+<tr><td class="l">End-to-end, %%K_FRAMES%%-frame consensus (simulated)</td><td>GitHub scenes</td><td>%%N_VAL_PLATES%%</td><td>&mdash;</td><td><b>%%ACC_MULTI%%</b></td></tr>
+</table>
+<figure><img src="figures/fig5_rec_curves.png" alt="Recogniser training curves"><figcaption>Fig. 5. Recogniser training: CTC loss (train) and full-plate accuracy / CER on the real validation crops per epoch (Stage 1: synthetic only, validated on GitHub crops; Stage 2: + GitHub lines; Stage 3: + MLUB crops, validated on MLUB test crops; round 1 with the initial layout labels, then round 2 after re-labelling).</figcaption></figure>
+<table><caption>Table IV. Effect of the number of voted frames K (simulated jitter, confidence-weighted per-character voting)</caption>
+<tr><th class="l">Test set</th><th>K = 1</th><th>K = 3</th><th>K = 5</th><th>K = %%K_FRAMES%%</th></tr>
+<tr><td class="l">MLUB crops (%%N_MLUB_VAL_PLATES%% plates)</td><td>%%MLUB_ACC%%</td><td>%%MLUB_K3%%</td><td>%%MLUB_K5%%</td><td>%%MLUB_K9%%</td></tr>
+<tr><td class="l">GitHub scenes, end-to-end (%%N_VAL_PLATES%% plates)</td><td>%%ACC_SINGLE%%</td><td>%%G_K3%%</td><td>%%G_K5%%</td><td>%%ACC_MULTI%%</td></tr>
+</table>
+<figure><img src="figures/fig6_qualitative.jpg" alt="Qualitative results"><figcaption>Fig. 6. End-to-end results on Mongolian test images (green: grammatical reading; orange: rejected by the grammar). Label = reading and recogniser confidence.</figcaption></figure>
+<p>%%REC_DISCUSSION%%</p>
+<h3>C. Latency</h3>
+<table><caption>Table V. Per-frame latency, 1920&times;1080 input, RTX 5080, FP16 (ms)</caption>
+<tr><th class="l">Component</th><th>Mean</th><th>Median</th><th>p95</th><th>Max</th></tr>
+<tr><td class="l">Detector (YOLO11n, 640 px, incl. pre/post)</td><td>%%LAT_DET%%</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td class="l">Recogniser + grammar (per frame)</td><td>%%LAT_REC%%</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td class="l">Total <code>process_frame</code></td><td><b>%%LAT_MEAN%%</b></td><td>%%LAT_MED%%</td><td>%%LAT_P95%%</td><td>%%LAT_MAX%%</td></tr>
+</table>
+<h3>D. Qualitative video test</h3>
+<figure><img src="figures/fig7_video.jpg" alt="Video frames"><figcaption>Fig. 7. Annotated frames from the three street videos of [11] (two hand-held portrait clips, one landscape clip); labels show the per-track consensus string, the single-frame confidence and the number of voted frames n.</figcaption></figure>
+<p>%%VIDEO_DISCUSSION%%</p>
+<h3>E. Summary against targets</h3>
+<table><caption>Table VI. Targets vs. achieved</caption>
+<tr><th class="l">Requirement</th><th>Target</th><th>Achieved</th><th>Status</th></tr>
+<tr><td class="l">Detector mAP<sub>50</sub> (Mongolian test)</td><td>&ge; 0.95</td><td>%%DET_MAP50_MN%%</td><td>%%ST_DET%%</td></tr>
+<tr><td class="l">Full-plate accuracy, single frame (MLUB, %%N_MLUB_VAL_PLATES%% plates)</td><td>&ge; 95%</td><td>%%MLUB_ACC%%</td><td>%%ST_MSINGLE%%</td></tr>
+<tr><td class="l">Full-plate accuracy, multi-frame K=%%K_FRAMES%% (MLUB)</td><td>&ge; 95%</td><td>%%MLUB_K9%%</td><td>%%ST_MMULTI%%</td></tr>
+<tr><td class="l">End-to-end accuracy, single frame (GitHub scenes, %%N_VAL_PLATES%% plates)</td><td>&ge; 95%</td><td>%%ACC_SINGLE%%</td><td>%%ST_SINGLE%%</td></tr>
+<tr><td class="l">End-to-end accuracy, multi-frame K=%%K_FRAMES%% (GitHub scenes)</td><td>&ge; 95%</td><td>%%ACC_MULTI%%</td><td>%%ST_MULTI%%</td></tr>
+<tr><td class="l">Latency per frame</td><td>&lt; 100 ms</td><td>%%LAT_MEAN%% ms (p95 %%LAT_P95%%)</td><td>%%ST_LAT%%</td></tr>
+<tr><td class="l">Test interface (image / video upload)</td><td>yes</td><td>Gradio app, <code>app/gradio_app.py</code></td><td>done</td></tr>
+</table>
+
+<h2>VII. Discussion, Limitations and Path to Deployment</h2>
+<p><b>Statistical power.</b> The MLUB test set (%%N_MLUB_VAL_PLATES%% plates) gives a 95% Wilson interval of %%CI_MLUB%% around the single-frame accuracy, which is adequate for a 95% claim. The end-to-end scene test set has only %%N_VAL_PLATES%% plates (one plate = %%ONE_PLATE_PCT%% points, interval %%CI_SINGLE%%), so the end-to-end figures in Table III show that the chain works on this parking-lot distribution but do not certify it. <b>Layout labels.</b> The automatically assigned layout of the MLUB crops is itself a model output; mislabelled layouts put a few wrong lines into training and count as errors at test time, so Table III slightly under-estimates the recogniser. <b>Domain coverage.</b> All real images are daytime, winter, phone-camera, parking-lot views from Ulaanbaatar; night, rain, headlight glare, motion blur from moving vehicles and the fixed low camera angle of a barrier gate are only approximated by augmentation. Diplomatic (red, ДК), military and trailer series are not represented. <b>Two-line split.</b> The fixed 55%/55% horizontal split assumes a roughly fronto-parallel plate; strong roll will mix the lines, and a learned split (or a 2-line sequence model) is a planned improvement. <b>Detector data.</b> With %%N_TRAIN_IMGS%% Mongolian training images the detector relies on the generic set for most of its invariances; adding the 984-image Roboflow set (API key required) is the cheapest next gain.</p>
+<p><b>Towards the parking system.</b> The recommended integration is: (1) run the detector on every frame of the gate camera and the recogniser only on tracks (saves recogniser time); (2) open the barrier when a track has &ge; 3 frames, a grammatical consensus and margin &ge; 0.8, else fall back to a manual/intercom path; (3) store the best crop, the consensus string and the margin for the entry/exit matching database, and use edit distance &le; 1 against the open-session list for exit matching, which makes the system tolerant to one residual character error; (4) log every rejected or low-margin read and have an operator correct it&mdash;those corrections become the labelled data that this project lacks; after a few hundred corrected plates the recogniser should be re-adapted and the test set enlarged to &ge; 500 plates so that a 95% claim carries a &plusmn;2-point interval; (5) export both models to ONNX/TensorRT (<code>scripts/export_onnx.py</code>) for an edge box; on a Jetson-class device the 640-px YOLO11n plus CRNN budget is well under 100 ms with INT8/FP16.</p>
+
+<h2>VIII. Conclusion</h2>
+<p>We built and evaluated a complete Mongolian ALPR baseline: a YOLO11n detector reaching mAP<sub>50</sub> = %%DET_MAP50_MN%% on Mongolian imagery, a CRNN-CTC recogniser over the full Mongolian Cyrillic alphabet trained from synthetic plates and adapted with 74 real plates, a plate grammar with region codes, and a confidence-weighted multi-frame consensus that lifts full-plate accuracy from %%ACC_SINGLE%% (single frame) to %%ACC_MULTI%% (K = %%K_FRAMES%%) at %%LAT_MEAN%% ms per 1080p frame. The code, data-preparation scripts, synthetic renderer, evaluation protocol and a Gradio test interface are delivered for the next phase, in which the parking camera itself becomes the source of the labelled data needed to turn the baseline into a certified system.</p>
+
+<h2>References</h2>
+<ol class="refs">
+<li>R. Laroca <i>et al.</i>, "A robust real-time automatic license plate recognition based on the YOLO detector," in <i>Proc. IJCNN</i>, 2018. arXiv:1802.09567.</li>
+<li>Q. Wang <i>et al.</i>, "A multi-task deep learning framework for real-time intelligent video surveillance with temporal event validation," arXiv:2607.03131, 2026.</li>
+<li>H. Pham <i>et al.</i>, "Character time-series matching for robust license plate recognition," arXiv:2307.11336, 2023.</li>
+<li>B. Shi, X. Bai, and C. Yao, "An end-to-end trainable neural network for image-based sequence recognition and its application to scene text recognition," <i>IEEE TPAMI</i>, vol. 39, no. 11, pp. 2298&ndash;2304, 2017.</li>
+<li>A. Graves, S. Fernández, F. Gomez, and J. Schmidhuber, "Connectionist temporal classification: Labelling unsegmented sequence data with recurrent neural networks," in <i>Proc. ICML</i>, 2006, pp. 369&ndash;376.</li>
+<li>Y. Du <i>et al.</i>, "PP-OCR: A practical ultra lightweight OCR system," arXiv:2009.09941, 2020; PaddleOCR, https://github.com/PaddlePaddle/PaddleOCR.</li>
+<li>M. Jaderberg, K. Simonyan, A. Vedaldi, and A. Zisserman, "Synthetic data and artificial neural networks for natural scene text recognition," in <i>NIPS Deep Learning Workshop</i>, 2014.</li>
+<li>A. Ruder <i>et al.</i>, "Synthesizing annotated image and video data using a rendering-based pipeline for improved license plate recognition," arXiv:2209.14448, 2022.</li>
+<li>gumbernator, "Mongolian-ALPR: Mongolian automated license plate recognition," GitHub, https://github.com/gumbernator/Mongolian-ALPR (fork: algorithm-developer/Mongolian-ALPR), accessed 14 Oct. 2026.</li>
+<li>Computer Vision (workspace), "mongolian plate dataset," Roboflow Universe, Apr. 2025, https://universe.roboflow.com/computer-vision-m1xzb/mongolian-plate, accessed 14 Oct. 2026.</li>
+<li>Tsundgerhen, "mongolian_licence_plate: YOLOv8-based Mongolian license plate detection," GitHub, 2025.</li>
+<li>narangoo9, "Mongolian-License-Plate-Recognition-System," GitHub, 2026.</li>
+<li>Wikipedia, "Vehicle registration plates of Mongolia," https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Mongolia, accessed 14 Oct. 2026.</li>
+<li>J. Dierkes, "Special license plates," Mongolia Focus (UBC), Aug. 2019, https://mongoliafocus.com/2019/08/official_cars/.</li>
+<li>G. Jocher and J. Qiu, "Ultralytics YOLO11," 2024, https://github.com/ultralytics/ultralytics.</li>
+<li>keremberke, "license-plate-object-detection" (Roboflow "Vehicle Registration Plates", 8,823 images), Hugging Face Datasets, 2023.</li>
+</ol>
+
+<h2>Appendix: Reproduction</h2>
+<pre>conda activate alpr
+python scripts/prepare_github_data.py && python scripts/prepare_hf_data.py
+python scripts/synth_plates.py --n 60000
+python scripts/train_det.py --epochsA %%EPOCHS_A%% --epochsB %%EPOCHS_B%%
+python scripts/train_rec.py --real_rep 0 --epochs %%REC_EPOCHS_S%% --out runs/rec/synth_only
+python scripts/train_rec.py --resume runs/rec/synth_only/best.pt --epochs %%REC_EPOCHS_F%% --out runs/rec/crnn
+cp runs/rec/crnn/best.pt models/plate_rec_crnn.pt
+python scripts/prepare_mlub_data.py          # layout labelling + split (uses current recogniser)
+python scripts/train_rec.py --resume models/plate_rec_crnn.pt --real data/rec/real_mlub data/rec/real_github --epochs %%REC_EPOCHS_M%% --lr 5e-4 --out runs/rec/crnn_mlub
+cp runs/rec/crnn_mlub/best.pt models/plate_rec_crnn.pt   # (repeat prepare + train once for round 2)
+python scripts/eval_pipeline.py --frames 9
+python app/gradio_app.py   # http://127.0.0.1:7860</pre>
+</div>
+</div></body></html>
