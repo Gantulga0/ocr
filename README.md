@@ -56,6 +56,11 @@ python app/gradio_app.py                  # http://127.0.0.1:7860  (зураг /
 | Төгсгөл хүртэлх, GitHub 19 бүтэн дүрстэй зураг | 73.7% (9 кадраар 78.9%) |
 | Нэг кадр, 1080p, RTX 5080 (FP16) | 7.3 мс (p95 9.8 мс) |
 
+## Тайлангууд
+- `report/report.pdf` — англи IEEE бүтэцтэй техникийн тайлан (6 хуудас, `scripts/make_report.py`)
+- `report/Явцын_тайлан_LaTeX_*.pdf` — монгол хэлээрх бакалаврын явцын тайлан (МУИС формат, 44 хуудас); эх код `report/latex/` (`main.tex`, `chapters/`, `figures/`), зургууд `scripts/make_thesis_figures.py`
+- `report/TAILBAR_MN.md` — монгол хэлээрх бүрэн техникийн тайлбар (hyperparameter, ашиглах заавар)
+
 ## Бүтэц
 - `mn_alpr/charset.py` — тэмдэгтийн олонлог (0-9 + 35 кирилл үсэг), CTC кодлол
 - `mn_alpr/plate_rules.py` — `^\d{4}[А-ЯӨҮ]{3}$` дүрэм, аймгийн кодууд, зөв байх магадлал

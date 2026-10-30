@@ -1,0 +1,102 @@
+% Монгол улсын дугаар таних — явцын тайлан (XeLaTeX / Tectonic)
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage{fontspec}
+\setmainfont{Liberation Serif}
+\setsansfont{Liberation Sans}
+\setmonofont{Liberation Mono}[Scale=0.85]
+\usepackage{polyglossia}
+\setmainlanguage{mongolian}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3cm,right=2cm]{geometry}
+\usepackage{setspace}\onehalfspacing
+\usepackage{graphicx,booktabs,array,multirow,longtable,float,caption,subcaption,amsmath,amssymb,xcolor,enumitem,listings,tocloft,titlesec,fancyhdr,url}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{figures/}}
+\setlist{nosep}
+% ---------- editable fields ----------
+\newcommand{\univ}{МОНГОЛ УЛСЫН ИХ СУРГУУЛЬ}
+\newcommand{\school}{МЭДЭЭЛЛИЙН ТЕХНОЛОГИ, ЭЛЕКТРОНИКИЙН СУРГУУЛЬ}
+\newcommand{\dept}{МЭДЭЭЛЭЛ, КОМПЬЮТЕРЫН УХААНЫ ТЭНХИМ}
+\newcommand{\studentname}{[Овгийн эхний үсэг]. [Нэр]}
+\newcommand{\studentid}{[Оюутны код]}
+\newcommand{\supervisor}{[Удирдагчийн нэр]}
+\newcommand{\cosupervisor}{[Хамтран удирдагчийн нэр]}
+\newcommand{\program}{Мэдээллийн технологи (D061303)}
+\newcommand{\reporttype}{Бакалаврын судалгааны ажил, Явцын тайлан}
+\newcommand{\titlemn}{ЗОГСООЛЫН СИСТЕМД ЗОРИУЛСАН МОНГОЛ УЛСЫН ДУГААР ТАНИХ ГҮН СУРГАЛТЫН ЗАГВАР БҮТЭЭХ}
+\newcommand{\titleen}{(Developing a Deep Learning Model for Mongolian License Plate Recognition for Parking Systems)}
+\newcommand{\reportdate}{2026 оны 10 дугаар сар}
+% ---------- styling ----------
+\titleformat{\chapter}[hang]{\bfseries\LARGE}{\thechapter.}{0.6em}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+\titleformat{\section}{\bfseries\large}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\bfseries\normalsize}{\thesubsection}{0.8em}{}
+\gappto\captionsmongolian{\renewcommand{\contentsname}{ГАРЧИГ}\renewcommand{\listfigurename}{ЗУРГИЙН ЖАГСААЛТ}\renewcommand{\listtablename}{ХҮСНЭГТИЙН ЖАГСААЛТ}\renewcommand{\figurename}{Зураг}\renewcommand{\tablename}{Хүснэгт}\renewcommand{\bibname}{НОМ ЗҮЙ}\renewcommand{\appendixname}{Хавсралт}\renewcommand{\chaptername}{Бүлэг}\renewcommand{\lstlistingname}{Код}}
+\captionsetup{labelfont=bf,labelsep=period,font=small,justification=justified}
+\renewcommand{\cftchapfont}{\normalfont}\renewcommand{\cftchappagefont}{\normalfont}\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cfttoctitlefont}{\hfill\normalsize\bfseries}\renewcommand{\cftaftertoctitle}{\hfill}
+\renewcommand{\cftloftitlefont}{\hfill\normalsize\bfseries}\renewcommand{\cftafterloftitle}{\hfill}
+\renewcommand{\cftlottitlefont}{\hfill\normalsize\bfseries}\renewcommand{\cftafterlottitle}{\hfill}
+\pagestyle{fancy}\fancyhf{}\fancyhead[L]{\itshape\small\leftmark}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\chaptermark}[1]{\markboth{БҮЛЭГ \thechapter.\ #1}{}}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,columns=fullflexible,keepspaces=true,showstringspaces=false,numbers=left,numberstyle=\tiny,xleftmargin=2em}
+\newcommand{\plate}[1]{\texttt{#1}}
+\begin{document}
+% ================= НҮҮР 1 =================
+\begin{titlepage}\centering
+{\bfseries\small \univ\\ \school\\ \dept\par}
+\vspace{3.5cm}
+{\large \studentname\par}
+\vspace{3cm}
+{\bfseries\Large \titlemn\par}\vspace{0.4cm}
+{\bfseries\large \titleen\par}\vspace{0.8cm}
+{\program\\ \reporttype\par}
+\vfill
+{Улаанбаатар\\[0.4cm] \reportdate\par}
+\end{titlepage}
+% ================= НҮҮР 2 =================
+\begin{titlepage}\centering
+{\bfseries\small \univ\\ \school\\ \dept\par}
+\vspace{5cm}
+{\bfseries\Large \titlemn\par}\vspace{0.4cm}
+{\bfseries\large \titleen\par}\vspace{0.8cm}
+{\program\\ \reporttype\par}
+\vspace{3cm}
+\begin{tabular}{p{3.8cm}p{4.3cm}p{6.5cm}}
+Удирдагч: & \rule{4cm}{0.4pt} & \supervisor\\[0.6cm]
+Хамтран удирдагч: & \rule{4cm}{0.4pt} & \cosupervisor\\[0.6cm]
+Гүйцэтгэсэн: & \rule{4cm}{0.4pt} & \studentname\ (\studentid)\\
+\end{tabular}
+\vfill
+{Улаанбаатар\\[0.4cm] \reportdate\par}
+\end{titlepage}
+% ================= ТӨЛӨВЛӨГӨӨ =================
+\thispagestyle{empty}\vspace*{\fill}\begin{center}{\bfseries\Large ҮЕЧИЛСЭН ТӨЛӨВЛӨГӨӨ}\\[1em]
+Энэ хуудасны оронд тамгалагдсан үечилсэн төлөвлөгөөг хавсаргана.\\(Скан хийсэн файлаа \texttt{figures/plan.pdf} нэрээр хуулж \texttt{main.tex}-д \texttt{includepdf} хийнэ.)\end{center}\vspace*{\fill}\clearpage
+% ================= БАТАЛГАА =================
+\pagenumbering{roman}\setcounter{page}{2}
+\chapter*{Зохиогчийн баталгаа}
+Миний бие \studentname\ «\titlemn» сэдэвтэй судалгааны ажлыг гүйцэтгэсэн болохыг зарлаж дараах зүйлсийг баталж байна:
+\begin{itemize}[leftmargin=2em]
+\item Ажил нь бүхэлдээ Монгол Улсын Их Сургуульд дээд боловсролын зэрэг горилохоор дэвшүүлсэн болно.
+\item Энэ ажлын аль нэг хэсгийг эсвэл бүхлээр нь ямар нэг их, дээд сургуулийн зэрэг горилохоор оруулж байгаагүй болно.
+\item Бусдын хийсэн ажлаас хуулбарлаагүй, эшлэл, зүүлтийг зохистой хийсэн болно.
+\item Ажлыг зохиогч би хийсэн ба миний хийсэн ажил, бусдын дэмжлэгийг ажилд тодорхой тусгасан болно.
+\item Ажилд тусалсан бүх эх сурвалжид талархаж байна.
+\end{itemize}
+\vspace{1em}Гарын үсэг: \rule{5cm}{0.4pt}\\[0.6em] Огноо: \rule{3cm}{0.4pt}
+\clearpage
+\tableofcontents\clearpage
+\listoffigures\clearpage
+\listoftables\clearpage
+\pagenumbering{arabic}
+\input{chapters/00_intro}
+\input{chapters/01_review}
+\input{chapters/02_data}
+\input{chapters/03_method}
+\input{chapters/04_results}
+\input{chapters/05_discussion}
+\input{chapters/06_conclusion}
+\input{chapters/07_bib}
+\appendix
+\input{chapters/08_appendix}
+\end{document}

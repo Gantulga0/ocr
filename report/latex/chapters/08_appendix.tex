@@ -1,0 +1,143 @@
+\chapter{АЙМАГ, ХОТЫН КОДЫН ХҮСНЭГТ}\label{app:regions}
+\begin{table}[H]\centering\caption{Дугаарын эхний хоёр үсгийн бүртгэлийн бүсийн код (\texttt{mn\_alpr/plate\_rules.py})}\small
+\begin{tabular}{ll|ll|ll}\toprule
+Код & Бүс & Код & Бүс & Код & Бүс\\\midrule
+АР & Архангай & ДУ & Дундговь & СҮ & Сүхбаатар\\
+БН & Баянхонгор & ОР & Орхон & СБ & Сүхбаатар хот\\
+БР & Багануур (УБ) & ХЭ & Хэнтий & ТӨ & Төв\\
+БӨ & Баян-Өлгий & ХО & Ховд & УБ, УН, УА, УЕ, УК & Улаанбаатар\\
+БУ & Булган & ХӨ & Хөвсгөл & УВ & Увс\\
+ГА & Говь-Алтай & НА & Налайх (УБ) & ЗА & Завхан\\
+ГС & Говьсүмбэр & ӨМ & Өмнөговь & ДК & Дипломат\\
+ДА & Дархан-Уул & ӨВ & Өвөрхангай & ЦА & Цэрэг\\
+ДГ & Дорноговь & СЭ & Сэлэнгэ & ХЦ & Хилийн цэрэг\\
+ДО & Дорнод & & & &\\\bottomrule
+\end{tabular}\end{table}
+
+\chapter{ТЭМДЭГТ ТУС БҮРИЙН ДЭЛГЭРЭНГҮЙ ҮР ДҮН}\label{app:perchar}
+\begin{table}[H]\centering\caption{MLUB тест (1\,491 дугаар): тэмдэгт тус бүрийн дээжийн тоо ба recall}\small
+\begin{tabular}{lrr|lrr|lrr}\toprule
+Тэмдэгт & Дээж & Recall & Тэмдэгт & Дээж & Recall & Тэмдэгт & Дээж & Recall\\\midrule
+0 & 659 & 99.7 & В & 84 & 100.0 & П & 50 & 98.0\\
+1 & 618 & 99.7 & Г & 43 & 100.0 & Р & 226 & 100.0\\
+2 & 546 & 99.6 & Д & 226 & 95.1 & С & 144 & 100.0\\
+3 & 618 & 100.0 & Е & 44 & 100.0 & Т & 115 & 97.4\\
+4 & 559 & 99.3 & З & 34 & 100.0 & У & 1025 & 99.9\\
+5 & 615 & 99.8 & И & 41 & 100.0 & Ү & 112 & 99.1\\
+6 & 570 & 99.8 & К & 33 & 90.9 & Х & 166 & 98.8\\
+7 & 620 & 99.8 & Л & 42 & 95.2 & Ц & 47 & 100.0\\
+8 & 640 & 99.8 & М & 47 & 100.0 & Ч & 22 & 100.0\\
+9 & 519 & 99.0 & Н & 493 & 98.4 & Э & 144 & 99.3\\
+А & 376 & 99.5 & О & 173 & 98.8 & Я & 28 & 100.0\\
+Б & 592 & 99.5 & Ө & 166 & 98.8 &  & & \\
+\bottomrule\end{tabular}\end{table}
+
+\chapter{СУРГАЛТЫН ТОХИРГООНЫ ФАЙЛ}\label{app:config}
+\section{Илрүүлэгчийн B үеийн өгөгдлийн тохиргоо}
+\begin{lstlisting}[language=,caption={configs/det\_stageB.yaml}]
+path: data/det
+train: [hf_plates/images/train, github_rep/images/train]
+val: github/images/val
+names:
+  0: plate
+\end{lstlisting}
+\section{Сургалт, үнэлгээний командууд}
+\begin{lstlisting}[language=bash,caption={Бүрэн дахин сургах дараалал}]
+python scripts/prepare_github_data.py
+python scripts/prepare_hf_data.py
+python scripts/synth_plates.py --n 60000
+python scripts/train_det.py --epochsA 25 --epochsB 60
+python scripts/train_rec.py --real_rep 0 --epochs 10 --out runs/rec/synth_only
+python scripts/train_rec.py --resume runs/rec/synth_only/best.pt --epochs 6 \
+    --lr 3e-4 --out runs/rec/crnn
+cp runs/rec/crnn/best.pt models/plate_rec_crnn.pt
+python scripts/prepare_mlub_data.py
+python scripts/train_rec.py --resume models/plate_rec_crnn.pt \
+    --real data/rec/real_mlub data/rec/real_github --real_rep 40 \
+    --epochs 8 --lr 5e-4 --out runs/rec/crnn_mlub_r1
+cp runs/rec/crnn_mlub_r1/best.pt models/plate_rec_crnn.pt
+python scripts/prepare_mlub_data.py      # re-label layouts
+python scripts/train_rec.py --resume models/plate_rec_crnn.pt \
+    --real data/rec/real_mlub data/rec/real_github --real_rep 40 \
+    --min_rep 3 --epochs 20 --lr 5e-4 --out runs/rec/crnn_mlub
+cp runs/rec/crnn_mlub/best.pt models/plate_rec_crnn.pt
+python scripts/eval_pipeline.py --frames 9
+python scripts/run_videos.py
+python app/gradio_app.py
+\end{lstlisting}
+
+\chapter{КОДЫН ХЭРЭГЖҮҮЛЭЛТ}\label{app:code}
+\section{CRNN загвар}
+\begin{lstlisting}[language=Python,caption={mn\_alpr/crnn.py: CRNN (residual CNN + BiLSTM + CTC head)}]
+class CRNN(nn.Module):
+    def __init__(self, num_classes=NUM_CLASSES, hidden=192):
+        super().__init__()
+        self.stem = nn.Sequential(nn.Conv2d(3, 32, 3, 1, 1, bias=False),
+                                  nn.BatchNorm2d(32), nn.ReLU(inplace=True))
+        self.layers = nn.Sequential(
+            ConvBlock(32, 64, (2, 2)),    # 24 x 96
+            ConvBlock(64, 128, (2, 2)),   # 12 x 48
+            ConvBlock(128, 128),
+            ConvBlock(128, 256, (2, 1)),  # 6 x 48
+            ConvBlock(256, 256),
+            ConvBlock(256, 384, (2, 1)),  # 3 x 48
+            ConvBlock(384, 384))
+        self.pool = nn.AdaptiveAvgPool2d((1, None))
+        self.rnn = nn.LSTM(384, hidden, num_layers=2, bidirectional=True,
+                           batch_first=True, dropout=0.1)
+        self.fc = nn.Linear(2 * hidden, num_classes)
+
+    def forward(self, x):                  # x: B,3,48,192
+        f = self.layers(self.stem(x))      # B,384,3,48
+        f = self.pool(f).squeeze(2).permute(0, 2, 1)   # B,T=48,C
+        f, _ = self.rnn(f)
+        return self.fc(f)                  # B,T,num_classes
+\end{lstlisting}
+\section{Дугаарын дүрэм ба магадлалын оноо}
+\begin{lstlisting}[language=Python,caption={mn\_alpr/plate\_rules.py (хэсэгчлэн)}]
+PLATE_RE = re.compile(r"^(\d{4})([%s]{3})$" % LETTERS)
+LATIN2CYR = str.maketrans("ABEKMHOPCTYX", "ABEKMHOPCTYX")  # Latin -> Cyrillic look-alikes (second string is Cyrillic)
+
+def normalize(text):
+    t = text.upper().translate(LATIN2CYR)
+    return re.sub(r"[^0-9%s]" % LETTERS, "", t)
+
+def plausibility(text):
+    m = PLATE_RE.match(normalize(text))
+    if not m: return 0.0
+    s = 0.6
+    if m.group(2)[:2] in REGION_CODES: s += 0.3
+    if m.group(2)[2] in SERIAL_LETTERS: s += 0.1
+    return s
+\end{lstlisting}
+\section{Олон кадрын жинлэсэн санал}
+\begin{lstlisting}[language=Python,caption={mn\_alpr/pipeline.py: PlateTrack}]
+class PlateTrack:
+    def add(self, text, conf, box):
+        self.box = box; self.n += 1; self.missed = 0
+        if not text: return
+        w = conf * (0.5 + PR.plausibility(text))   # confidence x grammar prior
+        self.votes.setdefault(len(text), [dict() for _ in range(len(text))])
+        for i, ch in enumerate(text):
+            self.votes[len(text)][i][ch] = self.votes[len(text)][i].get(ch, 0.0) + w
+
+    def consensus(self):
+        L = max(self.votes, key=lambda l: sum(sum(d.values()) for d in self.votes[l])
+                * (1.3 if l == 7 else 1.0))
+        chars, margins = [], []
+        for d in self.votes[L]:
+            items = sorted(d.items(), key=lambda kv: -kv[1]); tot = sum(d.values())
+            chars.append(items[0][0]); margins.append(items[0][1] / tot)
+        return "".join(chars), float(np.mean(margins)), self.n
+\end{lstlisting}
+\section{Хэлбэр тодорхойлох ба мөр хуваах}
+\begin{lstlisting}[language=Python,caption={mn\_alpr/pipeline.py: Recognizer.read\_plate}]
+def read_plate(self, crop):
+    h, w = crop.shape[:2]
+    if w / max(1, h) < TWO_LINE_AR:            # 1.8 -> two-line plate
+        top = crop[: int(h * 0.55)]; bot = crop[int(h * 0.45):]
+        t, c = self.read_lines([top, bot])
+        return PR.normalize(t[0] + t[1]), float(min(c)), "two-line"
+    t, c = self.read_lines([crop])
+    return PR.normalize(t[0]), float(c[0]), "single-line"
+\end{lstlisting}
